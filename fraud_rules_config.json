@@ -1,0 +1,475 @@
+{
+  "version": "2.0",
+  "last_updated": "2024-01",
+  "description": "Fraud scoring rules configuration for Anthony Lead Forensics",
+
+  "refund_thresholds": {
+    "full_refund": {
+      "threshold": 25.0,
+      "refund_percentage": 100,
+      "description": "≥25% fraud triggers full batch refund"
+    },
+    "partial_refund": {
+      "min_threshold": 15.0,
+      "max_threshold": 24.99,
+      "refund_percentage": "pro_rata",
+      "description": "15-24.99% fraud triggers pro-rata refund"
+    },
+    "no_refund": {
+      "max_threshold": 14.99,
+      "refund_percentage": 0,
+      "description": "<15% fraud is within acceptable tolerance"
+    }
+  },
+
+  "fraud_categories": {
+    "contact_validation": {
+      "max_points": 40,
+      "weight": 0.40,
+      "description": "Phone and email validation fraud"
+    },
+    "duplicate_detection": {
+      "max_points": 25,
+      "weight": 0.25,
+      "description": "Duplicate and recycled lead detection"
+    },
+    "geographic_fraud": {
+      "max_points": 15,
+      "weight": 0.15,
+      "description": "VPN, proxy, and location mismatch detection"
+    },
+    "timing_patterns": {
+      "max_points": 10,
+      "weight": 0.10,
+      "description": "Bot submissions and velocity fraud"
+    },
+    "data_quality": {
+      "max_points": 10,
+      "weight": 0.10,
+      "description": "Gibberish and incomplete data detection"
+    }
+  },
+
+  "fraud_indicators": {
+    "phone_validation": {
+      "invalid_format": {
+        "points": 10,
+        "description": "Phone number doesn't match E.164 format",
+        "auto_fraud": false
+      },
+      "disconnected_number": {
+        "points": 10,
+        "description": "Phone number not in service (Twilio verified)",
+        "auto_fraud": false
+      },
+      "voip_burner": {
+        "points": 8,
+        "description": "VOIP/burner number detected (Twilio carrier type)",
+        "auto_fraud": false
+      },
+      "repeated_phone": {
+        "points": 10,
+        "description": "Phone number appears 3+ times in batch",
+        "auto_fraud": false
+      },
+      "invalid_area_code": {
+        "points": 5,
+        "description": "Area code doesn't exist or is invalid",
+        "auto_fraud": false
+      },
+      "sequential_numbers": {
+        "points": 10,
+        "description": "Sequential phone numbers detected (555-1234, 555-1235)",
+        "auto_fraud": true
+      }
+    },
+
+    "email_validation": {
+      "invalid_format": {
+        "points": 10,
+        "description": "Email doesn't match RFC 5322 format",
+        "auto_fraud": false
+      },
+      "disposable_email": {
+        "points": 10,
+        "description": "Disposable email domain (ZeroBounce/domain list)",
+        "auto_fraud": false
+      },
+      "nonexistent_domain": {
+        "points": 10,
+        "description": "Domain has no MX records or doesn't resolve",
+        "auto_fraud": false
+      },
+      "catch_all_role": {
+        "points": 5,
+        "description": "Catch-all or role-based email (info@, admin@)",
+        "auto_fraud": false
+      },
+      "repeated_email": {
+        "points": 10,
+        "description": "Email appears 3+ times in batch",
+        "auto_fraud": false
+      },
+      "pattern_matching": {
+        "points": 8,
+        "description": "Email matches fraud pattern (test@, lead001@)",
+        "auto_fraud": false
+      },
+      "typo_domain": {
+        "points": 7,
+        "description": "Typo domain detected (gmial.com, yahooo.com)",
+        "auto_fraud": false
+      }
+    },
+
+    "duplicate_detection": {
+      "exact_duplicate": {
+        "points": 15,
+        "description": "Exact match on name+email+phone hash",
+        "auto_fraud": false
+      },
+      "fuzzy_duplicate": {
+        "points": 10,
+        "description": "85%+ similarity on contact information",
+        "auto_fraud": false,
+        "threshold": 85
+      },
+      "duplicate_phone_different_person": {
+        "points": 12,
+        "description": "Same phone, different name",
+        "auto_fraud": false
+      },
+      "duplicate_email_different_person": {
+        "points": 12,
+        "description": "Same email, different name",
+        "auto_fraud": false
+      },
+      "duplicate_ip": {
+        "points": 8,
+        "description": "5+ submissions from same IP address",
+        "auto_fraud": false,
+        "threshold": 5
+      },
+      "sequential_submissions": {
+        "points": 10,
+        "description": "10+ leads submitted in <5 minutes",
+        "auto_fraud": false,
+        "count_threshold": 10,
+        "time_threshold_seconds": 300
+      }
+    },
+
+    "geographic_fraud": {
+      "area_code_mismatch": {
+        "points": 8,
+        "description": "Phone area code doesn't match address state",
+        "auto_fraud": false
+      },
+      "impossible_geography": {
+        "points": 10,
+        "description": "IP location ≠ phone area code ≠ address state",
+        "auto_fraud": false
+      },
+      "foreign_ip": {
+        "points": 12,
+        "description": "IP address outside target country",
+        "auto_fraud": false
+      },
+      "vpn_proxy_detected": {
+        "points": 10,
+        "description": "VPN or proxy detected (IPQualityScore)",
+        "auto_fraud": false
+      },
+      "high_risk_zip": {
+        "points": 5,
+        "description": "Zip code on fraud blacklist",
+        "auto_fraud": false
+      }
+    },
+
+    "timing_patterns": {
+      "overnight_spike": {
+        "points": 8,
+        "description": "20+ leads submitted between 2-6 AM",
+        "auto_fraud": false,
+        "threshold": 20,
+        "time_range": "02:00-06:00"
+      },
+      "weekend_flood": {
+        "points": 6,
+        "description": "50%+ of leads submitted on weekends",
+        "auto_fraud": false,
+        "threshold": 0.50
+      },
+      "unnatural_velocity": {
+        "points": 10,
+        "description": "100+ leads submitted in 1 hour",
+        "auto_fraud": false,
+        "threshold": 100,
+        "time_window_minutes": 60
+      },
+      "same_timestamp": {
+        "points": 10,
+        "description": "Multiple leads submitted at exact same second",
+        "auto_fraud": true
+      },
+      "bot_pattern": {
+        "points": 10,
+        "description": "Submissions at regular intervals (std dev <5s)",
+        "auto_fraud": true,
+        "std_dev_threshold": 5
+      }
+    },
+
+    "data_quality": {
+      "missing_critical_fields": {
+        "points": 10,
+        "description": "Name, phone, OR email is missing/empty",
+        "auto_fraud": false
+      },
+      "gibberish_name": {
+        "points": 10,
+        "description": "Name matches gibberish patterns (asdfgh, test test)",
+        "auto_fraud": false
+      },
+      "invalid_name": {
+        "points": 8,
+        "description": "Single letter name or numbers in name",
+        "auto_fraud": false
+      },
+      "copy_paste_pattern": {
+        "points": 10,
+        "description": "All fields have identical format/case",
+        "auto_fraud": false
+      },
+      "minimum_effort": {
+        "points": 7,
+        "description": "All fields are single words",
+        "auto_fraud": false
+      },
+      "keyword_stuffing": {
+        "points": 8,
+        "description": "Marketing keywords in name fields",
+        "auto_fraud": false
+      }
+    }
+  },
+
+  "lead_classification": {
+    "fraudulent": {
+      "min_score": 50,
+      "max_score": 100,
+      "label": "FRAUDULENT",
+      "include_in_refund": true
+    },
+    "suspicious": {
+      "min_score": 25,
+      "max_score": 49,
+      "label": "SUSPICIOUS",
+      "include_in_refund": false
+    },
+    "valid": {
+      "min_score": 0,
+      "max_score": 24,
+      "label": "VALID",
+      "include_in_refund": false
+    }
+  },
+
+  "api_services": {
+    "twilio_lookup": {
+      "purpose": "Phone validation and carrier detection",
+      "cost_per_lookup": 0.005,
+      "required": true,
+      "provides": ["phone_validity", "carrier_type", "line_type"]
+    },
+    "zerobounce": {
+      "purpose": "Email validation and disposable detection",
+      "cost_per_credit": 0.0075,
+      "required": true,
+      "provides": ["email_validity", "disposable_detection", "mx_validation"]
+    },
+    "ipqualityscore": {
+      "purpose": "IP fraud detection and VPN/proxy detection",
+      "monthly_cost": 13.99,
+      "lookups_per_month": 5000,
+      "required": true,
+      "provides": ["vpn_detection", "proxy_detection", "geolocation", "fraud_score"]
+    },
+    "phonenumbers": {
+      "purpose": "Phone number parsing and format validation",
+      "cost": "free",
+      "required": true,
+      "provides": ["format_validation", "area_code_validation"]
+    },
+    "email_validator": {
+      "purpose": "Email syntax validation",
+      "cost": "free",
+      "required": true,
+      "provides": ["syntax_validation"]
+    }
+  },
+
+  "disposable_email_domains": [
+    "guerrillamail.com",
+    "guerrillamail.info",
+    "guerrillamail.biz",
+    "guerrillamail.de",
+    "guerrillamail.net",
+    "temp-mail.org",
+    "10minutemail.com",
+    "mailinator.com",
+    "throwaway.email",
+    "tempmail.com",
+    "getnada.com",
+    "maildrop.cc",
+    "sharklasers.com",
+    "spam4.me",
+    "tempmailaddress.com",
+    "yopmail.com",
+    "fakeinbox.com",
+    "emailondeck.com",
+    "throwawaymail.com",
+    "trashmail.com",
+    "dispostable.com",
+    "mintemail.com",
+    "mt2015.com",
+    "getairmail.com",
+    "armyspy.com",
+    "cuvox.de",
+    "dayrep.com",
+    "einrot.com",
+    "fleckens.hu",
+    "gustr.com",
+    "jourrapide.com",
+    "rhyta.com",
+    "superrito.com",
+    "teleworm.us",
+    "spambog.com",
+    "spambog.de",
+    "spambog.ru",
+    "spaml.com",
+    "tempr.email",
+    "mohmal.com",
+    "coccocmail.com",
+    "anonbox.net",
+    "anonymbox.com"
+  ],
+
+  "gibberish_patterns": [
+    "asdfgh",
+    "qwerty",
+    "zxcvbn",
+    "test test",
+    "test",
+    "fake",
+    "xxx",
+    "aaa",
+    "zzz",
+    "nnn",
+    "111",
+    "123",
+    "abc",
+    "click here",
+    "free scan",
+    "submit",
+    "enter"
+  ],
+
+  "auto_refund_triggers": {
+    "sequential_phone_numbers": {
+      "description": "Sequential phone numbers detected (e.g., 555-1234, 555-1235)",
+      "threshold_percentage": 10,
+      "action": "FULL_REFUND",
+      "severity": "CRITICAL"
+    },
+    "all_same_email_domain": {
+      "description": "All emails use same non-standard domain",
+      "threshold_percentage": 80,
+      "action": "FULL_REFUND",
+      "severity": "CRITICAL"
+    },
+    "foreign_ip_batch": {
+      "description": "80%+ IPs from foreign country for US offer",
+      "threshold_percentage": 80,
+      "action": "FULL_REFUND",
+      "severity": "CRITICAL"
+    },
+    "exact_timestamp_clustering": {
+      "description": "50+ leads submitted at exact same second",
+      "threshold_count": 50,
+      "action": "FULL_REFUND",
+      "severity": "CRITICAL"
+    },
+    "disposable_email_majority": {
+      "description": "40%+ using disposable email domains",
+      "threshold_percentage": 40,
+      "action": "FULL_REFUND",
+      "severity": "CRITICAL"
+    },
+    "disconnected_phone_majority": {
+      "description": "50%+ phones are disconnected/non-working",
+      "threshold_percentage": 50,
+      "action": "FULL_REFUND",
+      "severity": "CRITICAL"
+    },
+    "voip_number_majority": {
+      "description": "25%+ phones are VOIP/burner numbers",
+      "threshold_percentage": 25,
+      "action": "FULL_REFUND",
+      "severity": "HIGH"
+    }
+  },
+
+  "industry_benchmarks": {
+    "acceptable_fraud_rate": {
+      "min": 8,
+      "max": 12,
+      "description": "Industry standard acceptable fraud rate"
+    },
+    "excellent_quality": {
+      "max_fraud": 5,
+      "description": "Excellent lead quality"
+    },
+    "poor_quality": {
+      "min_fraud": 20,
+      "description": "Poor lead quality requiring investigation"
+    }
+  },
+
+  "processing_settings": {
+    "batch_size_for_api_calls": 100,
+    "max_concurrent_api_calls": 10,
+    "api_timeout_seconds": 30,
+    "retry_attempts": 3,
+    "retry_backoff_seconds": 2,
+    "fuzzy_match_threshold": 85,
+    "duplicate_phone_threshold": 3,
+    "duplicate_email_threshold": 3,
+    "bot_detection_std_dev_threshold": 5
+  },
+
+  "output_settings": {
+    "excel_color_coding": {
+      "fraudulent": "#FF0000",
+      "suspicious": "#FFFF00",
+      "valid": "#00FF00"
+    },
+    "report_sections": [
+      "executive_summary",
+      "methodology",
+      "detailed_findings",
+      "visual_evidence",
+      "refund_calculation",
+      "recommendations",
+      "appendices"
+    ],
+    "required_charts": [
+      "fraud_distribution_pie",
+      "submission_timeline",
+      "fraud_score_histogram",
+      "geographic_heatmap",
+      "duplicate_network"
+    ]
+  }
+}
